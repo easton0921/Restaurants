@@ -87,9 +87,7 @@ router.post("/subscription",Validator(Validations.Payment.subscription),subscrip
 
 router.post("/subscriptionPaymentLink", Validator(Validations.Payment.subscriptionPymaneLink), SubscriptionPaymentLink)
 
-router.post("/userSubscription",
-    //  Validator(Validations.Payment.subscriptionPymaneLink), 
-     webhook)
+router.post("/userSubscription", webhook)
 
 
 module.exports = router
