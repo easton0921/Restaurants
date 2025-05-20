@@ -180,23 +180,23 @@ exports.createSubscriptionPaymentLink = async (body) => {
     }
 
     let subscription = await Model.Subscription.findOne({ _id: subscriptionId })
-    
+
     if (!subscription) { throw new Error("Subscription not found.") }
 
     let data = await Services.stripe.createSubscriptionPaymentLink(subscription, user);
 
-//     const sessionDetails = await stripe.checkout.sessions.retrieve(data.id, {
-//       expand: ['subscription']
-//     });
-// console.log("session data ",sessionDetails)
-//    const stripeSubscriptionId = sessionDetails.subscription;
-// if (!stripeSubscriptionId) throw new Error("Stripe subscription ID not found in session.");
+    //     const sessionDetails = await stripe.checkout.sessions.retrieve(data.id, {
+    //       expand: ['subscription']
+    //     });
+    // console.log("session data ",sessionDetails)
+    //    const stripeSubscriptionId = sessionDetails.subscription;
+    // if (!stripeSubscriptionId) throw new Error("Stripe subscription ID not found in session.");
 
-//     console.log("Stripe Subscription ID:", stripeSubscriptionId);
+    //     console.log("Stripe Subscription ID:", stripeSubscriptionId);
 
-//     await stripe.subscriptions.update(stripeSubscriptionId, {
-//       cancel_at: Math.floor(Date.now() / 1000) + 86400 
-//     });
+    //     await stripe.subscriptions.update(stripeSubscriptionId, {
+    //       cancel_at: Math.floor(Date.now() / 1000) + 86400 
+    //     });
     return {
       data: { paymentLink: data.url },
       message: "Payment link created successfully",
@@ -209,67 +209,51 @@ exports.createSubscriptionPaymentLink = async (body) => {
 
 
 
- exports.userSubscription = async (req)=> {
-    let event = req.body;
-    const endpointSecret = process.env.stripe_endpoint_secret
-    if (endpointSecret) {
-        const signature = req.headers["stripe-signature"]
-        try {
-            event = stripe.webhooks.constructEvent(req.rawBody, signature, endpointSecret)
-            console.log("event is",event)
-        } catch (err) {
-            console.log('err: ', err);
-            console.log(`  Webhook signature verification failed.`, err.message);
-            throw err
-        }
+exports.userSubscription = async (req) => {
+  const endpointSecret = process.env.stripe_endpoint_secret;
+  let event = req.body;
+
+  if (endpointSecret) {
+    const signature = req.headers["stripe-signature"];
+    try {
+      event = stripe.webhooks.constructEvent(req.rawBody, signature, endpointSecret);
+      console.log(" Webhook verified:", event.type);
+    } catch (err) {
+      console.error(" Webhook verification failed:", err.message);
+      throw err;
     }
-    switch (event.type) {
-        case "checkout.session.async_payment_failed":
-            const checkoutsessionasyncpaymentfailed = event.data.object;
-            console.log('checkoutsessionasyncpaymentfailed: ', checkoutsessionasyncpaymentfailed);
-            break;
+  }
+  const eventData = event.data.object;
+  if (!eventData) { throw new Error("event data missing") }
 
-        case "checkout.session.async_payment_succeeded":
-            const checkoutsessionpaymentsucceeded = event.data.object;
-            console.log('checkoutsessionpaymentsucceeded: ', checkoutsessionpaymentsucceeded);
-            break;
+  switch (event.type) {
+    case "checkout.session.async_payment_failed":
+      console.log(" Async payment failed:", eventData);
+      break;
 
-        case "checkout.session.completed":
-            const checkoutsessioncompleted = event.data.object;
-            console.log('checkoutsessioncompleted: ', checkoutsessioncompleted);
-            break;
+    case "checkout.session.async_payment_succeeded":
+      console.log(" Async payment succeeded:", eventData);
+      break;
 
-        case "checkout.session.expired":
-            const checkoutsessionexpired = event.data.object;
-            console.log('checkoutsessionexpired: ', checkoutsessionexpired);
-            break;
+    case "checkout.session.completed":
+      console.log(" Checkout session completed:", eventData);
+      console.log(" Metadata:", eventData.metadata);
+      break;
 
-        case "payment_link.updated":
-            const paymentlinkcreated = event.data.object;
-            console.log('paymentlinkcreated: ', paymentlinkcreated);
-            break;
+    case "checkout.session.expired":
+      console.log(" Checkout session expired:", eventData);
+      break;
 
-        default:
-            console.log(`Unhandled event type ${event.type}.`)
+    case "payment_link.updated":
+      console.log(" Payment link updated:", eventData);
+      break;
 
-    }
+    default:
+      console.warn(` Unhandled event type: ${event.type}`);
+  }
 
-    if (event.type === "checkout.session.completed") {
-        const checkoutSession = event.data.object;
-        console.log("Metadata:", checkoutSession.metadata);
-    }
-    return {
-      data:{received: true},
-      message:"data fetch successfully"
-    }
-}
-
-
-
-
-
-
-
-
-
-
+  return {
+    data: { received: true },
+    message: " Stripe webhook processed successfully"
+  };
+};
