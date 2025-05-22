@@ -19,9 +19,21 @@ const encodeDecode = require("./app/middlewares/decryption");
 
 const app = express();
 
+// app.use((req, res, next) => {
+//     if (req.url.includes('/webhook')) {
+//         next();
+//     } else {
+//         express.json()(req, res, next);
+//     }
+// });
+// this for webhook ============================================================================
 app.use((req, res, next) => {
-    if (req.url.includes('/webhook')) {
-        next();
+    if (req.originalUrl.includes('/webhook')) {
+        express.json({
+            verify: (req, res, buf) => {
+                req.rawBody = buf.toString();
+            }
+        })(req, res, next);
     } else {
         express.json()(req, res, next);
     }
@@ -86,18 +98,7 @@ app.use(
 app.use((req, res, next) => {
     next();
 });
-// this for webhook ============================================================================
-app.use((req, res, next) => {
-    if (req.originalUrl.includes('/userSubscription')) {
-        express.json({
-            verify: (req, res, buf) => {
-                req.rawBody = buf.toString();
-            }
-        })(req, res, next);
-    } else {
-        express.json()(req, res, next);
-    }
-});
+
 //============================================================================================================
 
 /**
@@ -184,14 +185,14 @@ app.use(function (_req, _res, next) {
 
 app.use((error, req, res, next) => {
     if (res.headersSent) return next(error);
-  
+
     const status = error.status || 500;
     const message = process.env.NODE_ENV === 'prod' ? 'Internal Server Error' : error.message;
-  
+
     logger.error(`Error: ${status} - ${message} - ${req.method} ${req.url}`);
-    
+
     return res.status(status).json({ success: false, message });
-  });
-  
+});
+
 
 module.exports = app;

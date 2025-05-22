@@ -209,51 +209,71 @@ exports.createSubscriptionPaymentLink = async (body) => {
 
 
 
-exports.userSubscription = async (req) => {
-  const endpointSecret = process.env.stripe_endpoint_secret;
-  let event = req.body;
 
-  if (endpointSecret) {
-    const signature = req.headers["stripe-signature"];
+exports.handleWebhook = async (req) => {
+  try {
+    const sig = req.headers['stripe-signature'];
+    const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    let event;
+
+    const rawBody = req.rawBody || req.body;
+    console.log('rawBody:---------- ', rawBody);
     try {
-      event = stripe.webhooks.constructEvent(req.rawBody, signature, endpointSecret);
-      console.log(" Webhook verified:", event.type);
+      event = stripe.webhooks.constructEvent(rawBody, sig, endpointSecret);
     } catch (err) {
-      console.error(" Webhook verification failed:", err.message);
-      throw err;
+      throw new Error(`Webhook Error: ${err.message}`);
     }
+
+    switch (event.type) {
+      case 'checkout.session.async_payment_failed':
+        const checkoutSessionAsyncPaymentFailed = event.data.object;
+        console.log('checkoutSessionAsyncPaymentFailed: ', checkoutSessionAsyncPaymentFailed);
+        break;
+      case 'checkout.session.async_payment_succeeded':
+        const checkoutSessionAsyncPaymentSucceeded = event.data.object;
+        console.log('checkoutSessionAsyncPaymentSucceeded: ', checkoutSessionAsyncPaymentSucceeded);
+        break;
+      case 'checkout.session.completed':
+        const checkoutSessionCompleted = event.data.object;
+       // await updateSubscriptionStatus(checkoutSessionCompleted);
+        break;
+      case 'checkout.session.expired':
+        const checkoutSessionExpired = event.data.object;
+        console.log('checkoutSessionExpired: ', checkoutSessionExpired);
+        break;
+      default:
+        console.log(`Unhandled event type ${event.type}`);
+    }
+
+    return event;
+  } catch (error) {
+    throw error;
   }
-  const eventData = event.data.object;
-  if (!eventData) { throw new Error("event data missing") }
+}
 
-  switch (event.type) {
-    case "checkout.session.async_payment_failed":
-      console.log(" Async payment failed:", eventData);
-      break;
 
-    case "checkout.session.async_payment_succeeded":
-      console.log(" Async payment succeeded:", eventData);
-      break;
 
-    case "checkout.session.completed":
-      console.log(" Checkout session completed:", eventData);
-      console.log(" Metadata:", eventData.metadata);
-      break;
 
-    case "checkout.session.expired":
-      console.log(" Checkout session expired:", eventData);
-      break;
 
-    case "payment_link.updated":
-      console.log(" Payment link updated:", eventData);
-      break;
 
-    default:
-      console.warn(` Unhandled event type: ${event.type}`);
-  }
 
-  return {
-    data: { received: true },
-    message: " Stripe webhook processed successfully"
-  };
-};
+
+
+
+
+// Message Sumit Singh
+
+
+
+
+
+
+
+
+
+// Shift + Enter to add a new line
+
+
+
+// :bell:
+// Slack needs your permission t

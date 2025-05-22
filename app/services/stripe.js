@@ -68,8 +68,7 @@ async function createStripeProduct(subscription) {
 }
 
 async function createSubscriptionPaymentLink(subscription, user) {
-
-
+    
     const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
         line_items: [{ price: subscription.priceId, quantity: 1 }],

@@ -1,5 +1,6 @@
 const express = require('express')
 const router = express.Router()
+const bodyParser = require('body-parser');
 
 //payment intent=============================================================================================
 const paymentIntent = async (req, res, next) => {
@@ -65,7 +66,7 @@ const SubscriptionPaymentLink = async (req, res, next) => {
 const webhook = async (req, res, next) => {
     try {
         console.log("webhook router working")
-        const { data, message } = await Services.payment.userSubscription(req)
+        const { data, message } = await Services.payment.handleWebhook(req)
         return res.success(message, data)
     } catch (error) {
         console.log('error in webhook router', error)
@@ -87,7 +88,9 @@ router.post("/subscription",Validator(Validations.Payment.subscription),subscrip
 
 router.post("/subscriptionPaymentLink", Validator(Validations.Payment.subscriptionPymaneLink), SubscriptionPaymentLink)
 
-router.post("/userSubscription", webhook)
+
+router.post("/webhook", bodyParser.raw({ type: "application/json" }),webhook);
+
 
 
 module.exports = router
