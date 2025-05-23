@@ -184,6 +184,12 @@ exports.createSubscriptionPaymentLink = async (body) => {
       });
     }
 
+     if (user && !user.stripeCustomerId) {
+      const customer = await stripe.customers.create({ name:user.name, email });
+      user.stripeCustomerId = customer.id;
+      await user.save(); 
+    }
+
     let subscription = await Model.Subscription.findOne({ _id: subscriptionId })
 
     if (!subscription) { throw new Error("Subscription not found.") }
