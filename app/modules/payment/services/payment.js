@@ -14,8 +14,6 @@ exports.paymentIntent = async (body) => {
     } = body;
 
 
-    let user = await Model.User.findOne({ email });
-
     if (!user) {
       const customer = await stripe.customers.create({ name, email });
       user = await Model.User.create({
@@ -24,6 +22,13 @@ exports.paymentIntent = async (body) => {
         stripeCustomerId: customer.id
       });
     }
+
+    if (user && !user.stripeCustomerId) {
+      const customer = await stripe.customers.create({ name, email });
+      user.stripeCustomerId = customer.id;
+      await user.save(); 
+    }
+
 
     const paymentIntent = await stripe.paymentIntents.create({
       amount,
