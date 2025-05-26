@@ -196,18 +196,6 @@ exports.createSubscriptionPaymentLink = async (body) => {
 
     let data = await Services.stripe.createSubscriptionPaymentLink(subscription, user);
 
-    //     const sessionDetails = await stripe.checkout.sessions.retrieve(data.id, {
-    //       expand: ['subscription']
-    //     });
-    // console.log("session data ",sessionDetails)
-    //    const stripeSubscriptionId = sessionDetails.subscription;
-    // if (!stripeSubscriptionId) throw new Error("Stripe subscription ID not found in session.");
-
-    //     console.log("Stripe Subscription ID:", stripeSubscriptionId);
-
-    //     await stripe.subscriptions.update(stripeSubscriptionId, {
-    //       cancel_at: Math.floor(Date.now() / 1000) + 86400 
-    //     });
     return {
       data: { paymentLink: data.url },
       message: "Payment link created successfully",
