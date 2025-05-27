@@ -1,4 +1,5 @@
-const moment = require('moment');
+const axios = require('axios');
+
 require('dotenv').config()
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 
@@ -250,29 +251,49 @@ exports.handleWebhook = async (req) => {
   }
 }
 
+exports.mamoPayment = async (req) => {
+    try {
+        const options = {
+          method: 'POST',
+          url: 'https://sandbox.dev.business.mamopay.com/manage_api/v1/links',
+          headers: {
+            accept: 'application/json',
+            'content-type': 'application/json',
+             'Authorization': `Bearer ${process.env.MAMAO_SECRET_KEY}`  
+          },
+          data: {
+            title: 'Chocolate Box - Small',
+            description: '12pcs Chocolate Box',
+            active: true,
+            return_url: 'https://myawesomewebsite.com/paymentSuccess',
+            failure_return_url: 'https://failureurl.com/paymentFailure',
+            processing_fee_percentage: 3,
+            amount: 119.99,
+            amount_currency: 'AED',
+            link_type: 'standalone',
+            enable_tabby: false,
+            enable_message: false,
+            enable_tips: false,
+            save_card: 'off',
+            enable_customer_details: false,
+            enable_quantity: false,
+            enable_qr_code: false,
+            send_customer_receipt: false,
+            hold_and_charge_later: false
+          }
+        };
+        const response = await axios.request(options);
+        return {
+          message: 'Payment link created successfully',
+          data: response.data
+        };
+    } catch (error) {
+        throw error;
+    }
+};
 
 
 
 
 
 
-
-
-
-
-// Message Sumit Singh
-
-
-
-
-
-
-
-
-
-// Shift + Enter to add a new line
-
-
-
-// :bell:
-// Slack needs your permission t

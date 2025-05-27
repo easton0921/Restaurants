@@ -75,6 +75,20 @@ const webhook = async (req, res, next) => {
 };
 
 
+//Mamao payment gateway =============================================================================
+
+const mamaoPaymentLink = async (req, res, next) => {
+    try {
+        console.log("mamao router working")
+        const { data, message } = await Services.payment.mamoPayment(req)
+        return res.success(message, data)
+    } catch (error) {
+        console.log('error in webhook router', error)
+        next(error)
+    }
+};
+
+
 router.post("/",Validator(Validations.Payment.paymentIntent),paymentIntent),
 
 
@@ -90,6 +104,11 @@ router.post("/subscriptionPaymentLink", Validator(Validations.Payment.subscripti
 
 
 router.post("/webhook", bodyParser.raw({ type: "application/json" }),webhook);
+
+router.post("/mamaopayments",
+    //  bodyParser.raw({ type: "application/json" }),
+     mamaoPaymentLink);
+
 
 
 
