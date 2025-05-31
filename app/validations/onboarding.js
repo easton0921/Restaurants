@@ -92,6 +92,7 @@ module.exports.updateProfile = Joi.object({
   gender: Joi.number().valid(...Object.values(constants.GENDER)).optional(),
   dob : Joi.string().optional().error(new Error("Please Enter a DOB")),
   stripeCustomerId :Joi.string().optional(),
+  country : Joi.number().optional(),
 }); 
 
 

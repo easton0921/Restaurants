@@ -1,5 +1,6 @@
 
 const bcrypt = require("bcryptjs");
+const constants = require("../../config/constants");
 
 const Schema = new Mongoose.Schema({
   // referenceId: { type: String },
@@ -25,6 +26,7 @@ const Schema = new Mongoose.Schema({
   gender: { type: Number, enum: Object.values(constants.GENDER) },
   isNotification: { type: Boolean, default: false },
   stripeCustomerId: { type: String },
+  country : {type: Number ,enum : Object.values(constants.COUNTRY_TYPE)},
 
 
 
